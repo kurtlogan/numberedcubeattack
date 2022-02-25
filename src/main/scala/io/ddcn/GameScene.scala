@@ -43,13 +43,27 @@ object GameScene extends Scene[Unit, Unit, Unit]:
   ): Outcome[SceneUpdateFragment] =
     Outcome(
       SceneUpdateFragment(
-        Shape
-          .Box(
-            Rectangle(0, 0, 60, 60),
-            Fill.LinearGradient(Point(0), RGBA.Magenta, Point(45), RGBA.Cyan)
-          )
-          .withRef(30, 30)
-          .moveTo(100, 100)
-          .rotateTo(Radians.fromSeconds(context.running * 0.25))
+        polygon,
+        polygon.moveBy(20, 0),
+        polygon.moveBy(40, 0),
+        polygon.moveBy(60, 0),
+        polygon.moveBy(10, 17),
+        polygon.moveBy(30, 17),
+        polygon.moveBy(50, 17),
+        polygon.moveBy(70, 17)
       )
     )
+
+  val polygon =
+    Shape.Polygon(
+      List(
+        Point(50, 27),
+        Point(40, 20),
+        Point(40, 10),
+        Point(50, 3),
+        Point(60, 10),
+        Point(60, 20)
+      ),
+      Fill.Color(RGBA.Magenta)
+    )
+
