@@ -1,7 +1,8 @@
 package io.ddcn
 
-import indigo._
-import indigo.scenes._
+import indigo.*
+import indigo.scenes.*
+import io.ddcn.models.{Tile, WorldMap}
 
 object GameScene extends Scene[Unit, Unit, Unit]:
 
@@ -42,14 +43,29 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       viewModel: Unit
   ): Outcome[SceneUpdateFragment] =
     Outcome(
-      SceneUpdateFragment(
-        Shape
-          .Box(
-            Rectangle(0, 0, 60, 60),
-            Fill.LinearGradient(Point(0), RGBA.Magenta, Point(45), RGBA.Cyan)
-          )
-          .withRef(30, 30)
-          .moveTo(100, 100)
-          .rotateTo(Radians.fromSeconds(context.running * 0.25))
-      )
+      SceneUpdateFragment(world)
+    )
+
+  val world = WorldMap(20, 20, 7, 4)
+    .territories
+    .zip(List(RGBA.Coral, RGBA.Orange, RGBA.Plum, RGBA.Crimson, RGBA.Teal, RGBA.White, RGBA.Indigo))
+    .flatMap { case (t, c) =>
+      t.zones.flatMap { z =>
+        z.tiles.map { case Tile(x, y) =>
+          polygon(c).moveTo(x * 20, y * 17).moveBy(y % 2 * -10, 0).moveBy(20, 20)
+        }
+      }
+    }.toList
+
+  def polygon(color: indigo.shared.datatypes.RGBA) =
+    Shape.Polygon(
+      List(
+        Point(50, 27),
+        Point(40, 20),
+        Point(40, 10),
+        Point(50, 3),
+        Point(60, 10),
+        Point(60, 20)
+      ),
+      Fill.Color(color)
     )

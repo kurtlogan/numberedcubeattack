@@ -21,7 +21,7 @@ lazy val mygame =
         "org.scalameta" %%% "munit" % "0.7.29" % Test
       ),
       testFrameworks += new TestFramework("munit.Framework"),
-      scalafixOnCompile  := true,
+      //scalafixOnCompile  := true,
       semanticdbEnabled  := true,
       semanticdbVersion  := scalafixSemanticdb.revision,
     )
