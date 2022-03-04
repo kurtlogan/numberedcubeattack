@@ -15,10 +15,12 @@ object RichOps {
 
 case class Tile(x: Int, y: Int) {
   val neighbours: mutable.Set[Tile] =mutable.Set()
-  var north: Option[Tile] = None
-  var south: Option[Tile] = None
   var east: Option[Tile] = None
+  var northeast: Option[Tile] = None
+  var northwest: Option[Tile] = None
   var west: Option[Tile] = None
+  var southeast: Option[Tile] = None
+  var southwest: Option[Tile] = None
 
   def link(tile: Tile) = {
     neighbours += tile
@@ -29,7 +31,7 @@ case class Zone(tiles: Array[Tile]) {
 
 }
 
-case class Territory(zones: Array[Zone]) {
+case class Territory(zones: Array[Zone], owner: Option[Player]) {
 
 }
 
@@ -97,10 +99,13 @@ object WorldMap {
       val x = t.x
       val y = t.y
 
-      t.north = tiles.at(x - 1, y)
-      t.south = tiles.at(x + 1, y)
-      t.east = tiles.at(x, y + 1)
-      t.west = tiles.at(x, y - 1)
+      t.east = tiles.at(x + 1, y)
+      t.northeast = tiles.at(x + 1, y - 1)
+      t.southeast = tiles.at(x + 1, y + 1)
+      t.west = tiles.at(x - 1, y)
+      t.northwest = tiles.at(x - 1, y - 1)
+      t.southwest = tiles.at(x - 1, y + 1)
+
     })
     Zone(tiles.flatten)
   }
@@ -109,10 +114,12 @@ object WorldMap {
 object LinkNeighbours {
   def on(input: Zone): Zone = {
     input.tiles.foreach { t =>
-      if(t.north.isDefined) t.link(t.north.get)
-      if(t.south.isDefined) t.link(t.south.get)
       if(t.east.isDefined) t.link(t.east.get)
+      if(t.northeast.isDefined) t.link(t.northeast.get)
+      if(t.southeast.isDefined) t.link(t.southeast.get)
       if(t.west.isDefined) t.link(t.west.get)
+      if(t.northwest.isDefined) t.link(t.northwest.get)
+      if(t.southwest.isDefined) t.link(t.southwest.get)
     }
     input
   }
