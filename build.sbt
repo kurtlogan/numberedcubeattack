@@ -7,7 +7,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 Test / scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.CommonJSModule) }
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
+//ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 
 lazy val mygame =
   (project in file("."))
@@ -21,9 +21,9 @@ lazy val mygame =
         "org.scalameta" %%% "munit" % "0.7.29" % Test
       ),
       testFrameworks += new TestFramework("munit.Framework"),
-      scalafixOnCompile  := true,
+      //scalafixOnCompile  := true,
       semanticdbEnabled  := true,
-      semanticdbVersion  := scalafixSemanticdb.revision,
+      //semanticdbVersion  := scalafixSemanticdb.revision,
     )
     .settings( // Indigo specific settings
       showCursor          := true,
