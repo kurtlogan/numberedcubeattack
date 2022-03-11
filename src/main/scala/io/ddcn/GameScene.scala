@@ -43,19 +43,8 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       viewModel: Unit
   ): Outcome[SceneUpdateFragment] =
     Outcome(
-      SceneUpdateFragment(world)
+      SceneUpdateFragment(polygon(RGBA.White), polygon(RGBA.Blue).moveBy(20, 20), polygon(RGBA.Teal).moveTo(100, 100))
     )
-
-  val world = WorldMap(20, 20, 7, 4)
-    .territories
-    .zip(List(RGBA.Coral, RGBA.Orange, RGBA.Plum, RGBA.Crimson, RGBA.Teal, RGBA.White, RGBA.Indigo))
-    .flatMap { case (t, c) =>
-      t.zones.flatMap { z =>
-        z.tiles.map { case Tile(x, y) =>
-          polygon(c).moveTo(x * 20, y * 17).moveBy(y % 2 * -10, 0).moveBy(20, 20)
-        }
-      }
-    }.toList
 
   def polygon(color: indigo.shared.datatypes.RGBA) =
     Shape.Polygon(

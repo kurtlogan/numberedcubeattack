@@ -53,7 +53,7 @@ object WorldMap {
 
     val territories = (for(p <- 0 until players) yield {
       val zone = makeZones(zonesPerPlayer, tilesPerPlayer)
-      Territory(zone)
+      Territory(zone, None)
     }).toArray
 
     WorldMap(territories)
