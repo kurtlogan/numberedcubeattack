@@ -11,10 +11,19 @@ object RichOps {
     def at(row: Int, col: Int): Option[A] =
       array.lift(row).flatMap(_.lift(col))
   }
+
+  implicit class OptionOps[A](opt: Option[A]) {
+
+    def flip[B](b: => B): Option[B] =
+      opt match {
+        case Some(_) => None
+        case None    => Some(b)
+      }
+  }
 }
 
 case class Tile(x: Int, y: Int) {
-  val neighbours: mutable.Set[Tile] =mutable.Set()
+  val neighbours: mutable.Set[Tile] = mutable.Set()
   var east: Option[Tile] = None
   var northeast: Option[Tile] = None
   var northwest: Option[Tile] = None
@@ -28,6 +37,13 @@ case class Tile(x: Int, y: Int) {
 }
 
 case class Zone(tiles: Array[Tile]) {
+
+  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y    )))
+  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y - 1)))
+  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y + 1)))
+  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y    )))
+  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y - 1)))
+  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y + 1)))
 
 }
 
@@ -53,7 +69,7 @@ object WorldMap {
 
     val territories = (for(p <- 0 until players) yield {
       val zone = makeZones(zonesPerPlayer, tilesPerPlayer)
-      Territory(zone)
+      Territory(zone, None)
     }).toArray
 
     WorldMap(territories)

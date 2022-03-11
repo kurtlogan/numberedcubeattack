@@ -20,7 +20,7 @@ object NumberedCubeAttack extends IndigoGame[Unit, Unit, Unit, Unit]:
     Outcome(
       BootResult.noData(
         GameConfig.default
-          .withViewport(1000, 1000)
+          .withViewport(1300, 1000)
           .withClearColor(RGBA.White)
       )
     )
