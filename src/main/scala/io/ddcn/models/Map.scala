@@ -78,9 +78,9 @@ object WorldMap {
   def makeZones(zones: Int, tiles: Int): Array[Zone] = {
     var maxTiles = tiles
     (for(z <- 0 until zones) yield {
-      val zoneSize = if(z+1 == zones) maxTiles else Math.min(randomZoneSize(maxTiles-1), math.ceil(tiles/2)).toInt
+      val zoneSize = if(z+1 == zones) maxTiles else Math.min(randomZoneSize(Math.min(maxTiles-1, 1)), math.ceil(tiles/2)).toInt // this could choose a tile size of zero ???
       val territory = makeZone(zoneSize)
-      maxTiles = Math.max(maxTiles - zoneSize, 1)
+      maxTiles = Math.max(maxTiles - zoneSize, 1) // this could exceed initial max tile size
       territory
     }).toArray
   }
@@ -89,7 +89,9 @@ object WorldMap {
 
     val tilesWithNeighbour =
       if(!usedTiles.isEmpty)
-        usableTiles.tiles.flatMap(t => t.neighbours).toSet.intersect(usedTiles.toSet).toArray
+        usedTiles.flatMap(_.neighbours).toSet
+          .diff(usedTiles.toSet)
+          .intersect(usableTiles.tiles.toSet).toArray
       else
         usableTiles.tiles
 
@@ -104,7 +106,9 @@ object WorldMap {
   }
 
   def addNeighbour(tiles: Array[Tile]): Array[Tile] = {
-    tiles :+ Random.shuffle(tiles.flatMap(t => t.neighbours.filter(n => !tiles.contains(n) && !usedTiles.contains(n))).toList).head
+    Random.shuffle(tiles.flatMap(t => t.neighbours.filter(n => !tiles.contains(n) && !usedTiles.contains(n) && usableTiles.tiles.contains(n))).toList)
+      .headOption.map(t => tiles :+ t)
+      .getOrElse(tiles)
   }
 
   def randomZoneSize(max: Int): Int = {

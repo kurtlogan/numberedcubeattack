@@ -48,7 +48,7 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       SceneUpdateFragment(Layer(world))
     )
 
-  lazy val gen = testData//WorldMap(20, 20, 7, 1)
+  lazy val gen = WorldMap(30, 30, 7, 1)
 
   //gen.territories.foreach{t => println("t"); t.zones.foreach{z => println("z"); z.tiles.foreach(println)}}
 
@@ -133,7 +133,7 @@ object GameScene extends Scene[Unit, Unit, Unit]:
     def placeAt(shape: Shape, x: Int, y: Int): Shape =
       shape
         .moveTo(x * width, y * (totalHeight - ((totalHeight - sideHeight) / 2)))
-        .moveBy((y % 2) * -(width / 2), 0) // offset x for every second y
+        .moveBy((y % 2) * (width / 2), 0) // offset x for every second y
         .moveBy(40, 40) // add spacing to map
   }
 
