@@ -86,9 +86,12 @@ object WorldMap {
   }
 
   def makeZone(zoneSize: Int): Zone = {
-    var tilesWithNeighbour = usableTiles.tiles
-    if(!usedTiles.isEmpty)
-      tilesWithNeighbour = usableTiles.tiles.flatMap(t => t.neighbours).toSet.intersect(usedTiles.toSet).toArray
+
+    val tilesWithNeighbour =
+      if(!usedTiles.isEmpty)
+        usableTiles.tiles.flatMap(t => t.neighbours).toSet.intersect(usedTiles.toSet).toArray
+      else
+        usableTiles.tiles
 
     val start = tilesWithNeighbour(Random.nextInt(tilesWithNeighbour.length))
     var tiles = Array[Tile](start)
