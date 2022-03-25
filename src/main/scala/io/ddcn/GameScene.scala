@@ -48,7 +48,7 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       SceneUpdateFragment(Layer(world))
     )
 
-  lazy val gen = WorldMap(30, 30, 7, 1)
+  lazy val gen = WorldMap(30, 30, 3, 1)
 
   //gen.territories.foreach{t => println("t"); t.zones.foreach{z => println("z"); z.tiles.foreach(println)}}
 

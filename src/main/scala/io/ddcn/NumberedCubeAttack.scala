@@ -8,10 +8,10 @@ import scala.scalajs.js.annotation.JSExportTopLevel
 object NumberedCubeAttack extends IndigoGame[Unit, Unit, Unit, Unit]:
 
   def initialScene(bootData: Unit): Option[SceneName] =
-    None
+    Option(MenuScene.name)
 
   def scenes(bootData: Unit): NonEmptyList[Scene[Unit, Unit, Unit]] =
-    NonEmptyList(GameScene)
+    NonEmptyList(MenuScene, GameScene)
 
   val eventFilters: EventFilters =
     EventFilters.Permissive
