@@ -38,12 +38,12 @@ case class Tile(x: Int, y: Int) {
 
 case class Zone(tiles: Array[Tile]) {
 
-  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y    )))
-  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y - 1)))
-  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y + 1)))
-  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y    )))
-  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y - 1)))
-  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y + 1)))
+  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 10, t.y    )))
+  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 5, t.y - 10)))
+  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 5, t.y + 10)))
+  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 10, t.y    )))
+  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y - 10)))
+  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y + 10)))
 
 }
 
@@ -118,21 +118,28 @@ object WorldMap {
   def getCoords(height: Int, width: Int) = {
     val tiles = (for(x <- 0 until width) yield {
       (for(y <- 0 until height) yield {
-        Tile(x, y)
+        Tile((x * 10) + ((y % 2) * 5), y * 10)
       }).toArray
     }).toArray
 
     tiles.foreach(_.foreach { t =>
-      val x = t.x
-      val y = t.y
+      val x = Math.abs(t.x / 10)
+      val y = t.y / 10
 
       t.east = tiles.at(x + 1, y)
-      t.northeast = tiles.at(x + 1, y - 1)
-      t.southeast = tiles.at(x + 1, y + 1)
       t.west = tiles.at(x - 1, y)
-      t.northwest = tiles.at(x - 1, y - 1)
-      t.southwest = tiles.at(x - 1, y + 1)
 
+      if (t.x % 10 > 0) {
+        t.northeast = tiles.at(x + 1, y - 1)
+        t.northwest = tiles.at(x, y - 1)
+        t.southeast = tiles.at(x + 1, y + 1)
+        t.southwest = tiles.at(x, y + 1)
+      } else {
+        t.northeast = tiles.at(x, y - 1)
+        t.northwest = tiles.at(x - 1, y - 1)
+        t.southeast = tiles.at(x, y + 1)
+        t.southwest = tiles.at(x -1, y + 1)
+      }
     })
     Zone(tiles.flatten)
   }
