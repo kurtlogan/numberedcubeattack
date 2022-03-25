@@ -11,10 +11,19 @@ object RichOps {
     def at(row: Int, col: Int): Option[A] =
       array.lift(row).flatMap(_.lift(col))
   }
+
+  implicit class OptionOps[A](opt: Option[A]) {
+
+    def flip[B](b: => B): Option[B] =
+      opt match {
+        case Some(_) => None
+        case None    => Some(b)
+      }
+  }
 }
 
 case class Tile(x: Int, y: Int) {
-  val neighbours: mutable.Set[Tile] =mutable.Set()
+  val neighbours: mutable.Set[Tile] = mutable.Set()
   var east: Option[Tile] = None
   var northeast: Option[Tile] = None
   var northwest: Option[Tile] = None
@@ -28,6 +37,13 @@ case class Tile(x: Int, y: Int) {
 }
 
 case class Zone(tiles: Array[Tile]) {
+
+  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y    )))
+  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y - 1)))
+  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y + 1)))
+  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y    )))
+  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y - 1)))
+  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y + 1)))
 
 }
 
@@ -62,15 +78,24 @@ object WorldMap {
   def makeZones(zones: Int, tiles: Int): Array[Zone] = {
     var maxTiles = tiles
     (for(z <- 0 until zones) yield {
-      val zoneSize = if(z+1 == zones) maxTiles else Math.min(randomZoneSize(maxTiles-1), math.ceil(tiles/2)).toInt
+      val zoneSize = if(z+1 == zones) maxTiles else Math.min(randomZoneSize(Math.min(maxTiles-1, 1)), math.ceil(tiles/2)).toInt // this could choose a tile size of zero ???
       val territory = makeZone(zoneSize)
-      maxTiles = Math.max(maxTiles - zoneSize, 1)
+      maxTiles = Math.max(maxTiles - zoneSize, 1) // this could exceed initial max tile size
       territory
     }).toArray
   }
 
   def makeZone(zoneSize: Int): Zone = {
-    val start = usableTiles.tiles(Random.nextInt(usableTiles.tiles.length))
+
+    val tilesWithNeighbour =
+      if(!usedTiles.isEmpty)
+        usedTiles.flatMap(_.neighbours).toSet
+          .diff(usedTiles.toSet)
+          .intersect(usableTiles.tiles.toSet).toArray
+      else
+        usableTiles.tiles
+
+    val start = tilesWithNeighbour(Random.nextInt(tilesWithNeighbour.length))
     var tiles = Array[Tile](start)
     1 until zoneSize foreach { _ =>
       tiles = addNeighbour(tiles)
@@ -81,7 +106,9 @@ object WorldMap {
   }
 
   def addNeighbour(tiles: Array[Tile]): Array[Tile] = {
-    tiles :+ Random.shuffle(tiles.flatMap(t => t.neighbours.filter(n => !tiles.contains(n) && !usedTiles.contains(n))).toList).head
+    Random.shuffle(tiles.flatMap(t => t.neighbours.filter(n => !tiles.contains(n) && !usedTiles.contains(n) && usableTiles.tiles.contains(n))).toList)
+      .headOption.map(t => tiles :+ t)
+      .getOrElse(tiles)
   }
 
   def randomZoneSize(max: Int): Int = {
