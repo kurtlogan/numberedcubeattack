@@ -48,34 +48,45 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       SceneUpdateFragment(Layer(world))
     )
 
-  lazy val gen = WorldMap(30, 30, 7, 1)
+  lazy val gen = WorldMap(30, 37, 8, 1, 14, 32)
 
   //gen.territories.foreach{t => println("t"); t.zones.foreach{z => println("z"); z.tiles.foreach(println)}}
+
+  val playerColours =
+    List(
+      RGBA.Purple,
+      RGBA.Green,
+      RGBA.Orange,
+      RGBA.Magenta,
+      RGBA.SeaGreen,
+      RGBA.Yellow,
+      RGBA.Cyan,
+      RGBA.Crimson
+    )
 
   lazy val world = // must be a val to prevent calculations occurring on every render
     gen
       .territories
-      .zip(List(RGBA.Coral, RGBA.Orange, RGBA.Plum, RGBA.Crimson, RGBA.Teal, RGBA.SlateGray, RGBA.Indigo))
+      .zip(playerColours)
       .flatMap { case (t, c) =>
         t.zones.flatMap { z =>
           z.tiles.map { case t@Tile(x, y) =>
             ViewTile.placeAt(ViewTile.tile(c), x, y)
           }
-//           ++ z.eastBoundry.map      { case Tile(x, y) => ViewTile.eastBorder(x, y) }
-//            ++ z.westBoundry.map      { case Tile(x, y) => ViewTile.westBorder(x, y) }
-//            ++ z.southwestBoundry.map { case Tile(x, y) => ViewTile.southWestBorder(x, y) }
-//            ++ z.southeastBoundry.map { case Tile(x, y) => ViewTile.southEastBorder(x, y) }
-//            ++ z.northwestBoundry.map { case Tile(x, y) => ViewTile.northWestBorder(x, y) }
-//            ++ z.northeastBoundry.map { case Tile(x, y) => ViewTile.northEastBorder(x, y) }
+           ++ z.eastBoundry.map      { case Tile(x, y) => ViewTile.eastBorder(x, y) }
+            ++ z.westBoundry.map      { case Tile(x, y) => ViewTile.westBorder(x, y) }
+            ++ z.southwestBoundry.map { case Tile(x, y) => ViewTile.southWestBorder(x, y) }
+            ++ z.southeastBoundry.map { case Tile(x, y) => ViewTile.southEastBorder(x, y) }
+            ++ z.northwestBoundry.map { case Tile(x, y) => ViewTile.northWestBorder(x, y) }
+            ++ z.northeastBoundry.map { case Tile(x, y) => ViewTile.northEastBorder(x, y) }
         }
       }.toList
 
   object ViewTile {
 
-    val scale: Double = 2
-    val width: Int = (20 * scale).toInt
-    val totalHeight: Int = (17 * scale).toInt
-    val sideHeight: Int = (7 * scale).toInt
+    val width: Int = 30
+    val totalHeight: Int = 26
+    val sideHeight: Int = 10
     val lineSize: Int = 4
 
     def tile(color: RGBA) =
