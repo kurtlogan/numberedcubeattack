@@ -11,15 +11,6 @@ object RichOps {
     def at(row: Int, col: Int): Option[A] =
       array.lift(row).flatMap(_.lift(col))
   }
-
-  implicit class OptionOps[A](opt: Option[A]) {
-
-    def flip[B](b: => B): Option[B] =
-      opt match {
-        case Some(_) => None
-        case None    => Some(b)
-      }
-  }
 }
 
 case class Tile(x: Int, y: Int) {
@@ -38,13 +29,12 @@ case class Tile(x: Int, y: Int) {
 
 case class Zone(tiles: Array[Tile]) {
 
-  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y    )))
-  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y - 1)))
-  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 1, t.y + 1)))
-  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y    )))
-  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y - 1)))
-  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 1, t.y + 1)))
-
+  val eastBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x + 10, t.y    )))
+  val northeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 5, t.y - 10)))
+  val southeastBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x + 5, t.y + 10)))
+  val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 10, t.y    )))
+  val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y - 10)))
+  val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y + 10)))
 }
 
 case class Territory(zones: Array[Zone], owner: Option[Player]) {
@@ -56,83 +46,111 @@ case class WorldMap(territories: Array[Territory]) {
 }
 
 object WorldMap {
-  private var usableTiles: Zone = Zone(Array())
-  private var usedTiles: Array[Tile] = Array()
+  private val usedTiles: mutable.Set[Tile] = mutable.Set()
 
-  def apply(height: Int, width: Int, players: Int, zonesPerPlayer: Int): WorldMap = {
-    if(players * zonesPerPlayer > height * width) throw new Exception("Won't Fit")
+  def apply(height: Int, width: Int, players: Int, zonesPerPlayer: Int, minZoneSize: Int = 1, maxZoneSize: Int = 100): WorldMap = {
+    if(players * zonesPerPlayer * maxZoneSize > height * width) throw new Exception("Won't Fit")
 
-    usableTiles = LinkNeighbours.on(getCoords(height, width))
-    val tileCount = usableTiles.tiles.length
-    val blankSpace = 0 //for later extension
-    val tilesPerPlayer = math.floor((tileCount - blankSpace) / players).toInt
+    val usableTiles = LinkNeighbours.on(getCoords(height, width))
 
-    val territories = (for(p <- 0 until players) yield {
-      val zone = makeZones(zonesPerPlayer, tilesPerPlayer)
-      Territory(zone, None)
-    }).toArray
+    val zones: Array[Zone] =
+      (for(_ <- 0 until (players * zonesPerPlayer)) yield {
+        //make optional lakes
+//        if(Random.nextInt(3) == 2) {
+//          makeZone(Random.between(4, 14), usableTiles)
+//        }
+
+        makeZone(Random.between(minZoneSize, maxZoneSize + 1), usableTiles)
+      }).toArray
+
+    val territories =
+      Random.shuffle(zones)
+        .grouped(zonesPerPlayer)
+        .map(zs => Territory(zs.toArray, None))
+        .toArray
 
     WorldMap(territories)
   }
 
-  def makeZones(zones: Int, tiles: Int): Array[Zone] = {
-    var maxTiles = tiles
-    (for(z <- 0 until zones) yield {
-      val zoneSize = if(z+1 == zones) maxTiles else Math.min(randomZoneSize(Math.min(maxTiles-1, 1)), math.ceil(tiles/2)).toInt // this could choose a tile size of zero ???
-      val territory = makeZone(zoneSize)
-      maxTiles = Math.max(maxTiles - zoneSize, 1) // this could exceed initial max tile size
-      territory
-    }).toArray
-  }
-
-  def makeZone(zoneSize: Int): Zone = {
+  def makeZone(zoneSize: Int, startingTiles: Zone): Zone = {
 
     val tilesWithNeighbour =
-      if(!usedTiles.isEmpty)
+      if(usedTiles.nonEmpty)
         usedTiles.flatMap(_.neighbours).toSet
-          .diff(usedTiles.toSet)
-          .intersect(usableTiles.tiles.toSet).toArray
+          .diff(usedTiles.toSet).toArray
       else
-        usableTiles.tiles
+        startingTiles.tiles
 
-    val start = tilesWithNeighbour(Random.nextInt(tilesWithNeighbour.length))
-    var tiles = Array[Tile](start)
-    1 until zoneSize foreach { _ =>
-      tiles = addNeighbour(tiles)
+    var zone: Array[Tile] = null
+    val blockedTiles: mutable.Set[Tile] = mutable.Set()
+    while(zone == null) {
+      val start = tilesWithNeighbour(Random.nextInt(tilesWithNeighbour.length))
+      var tiles = Array[Tile](start)
+      1 until zoneSize foreach { _ =>
+        tiles = addNeighbour(tiles, blockedTiles.toSet)
+      }
+
+      if(tiles.length != zoneSize) {
+        // add to blocked tiles set as this area
+        // is not large enough for this particular zone
+        blockedTiles ++= tiles
+      } else {
+        usedTiles ++= tiles
+        zone = tiles
+      }
     }
-    usedTiles = tiles
-    usableTiles = Zone(usableTiles.tiles.filter(t => !usedTiles.contains(t)))
-    Zone(tiles)
+
+    Zone(zone)
   }
 
-  def addNeighbour(tiles: Array[Tile]): Array[Tile] = {
-    Random.shuffle(tiles.flatMap(t => t.neighbours.filter(n => !tiles.contains(n) && !usedTiles.contains(n) && usableTiles.tiles.contains(n))).toList)
-      .headOption.map(t => tiles :+ t)
-      .getOrElse(tiles)
-  }
+  def addNeighbour(tiles: Array[Tile], blockedTiles: Set[Tile]): Array[Tile] = {
 
-  def randomZoneSize(max: Int): Int = {
-    Random.between(1, max+1)
+    def nfilter(tile: Tile): Set[Tile] =
+      tile.neighbours.filter(n => !tiles.contains(n) && !blockedTiles.contains(n) && !usedTiles.contains(n)).toSet
+
+    val validTiles =
+      tiles
+        .flatMap(nfilter)
+        .groupBy(t => t.neighbours.count(n => tiles.contains(n))) // favour tiles with more neighbours to remove gaps and prevent corridors
+        //.groupBy(t => t.neighbours.count(n => tiles.contains(n) || usedTiles.contains(n))) // no "lakes"
+        .toList
+        .sortBy(_._1)(Ordering.Int.reverse) // remove ordering for corridor mode ;)
+        .map(_._2)
+        .headOption
+
+    validTiles.flatMap { ts =>
+      Random
+        .shuffle(ts.toList)
+        .headOption
+        .map(t => tiles :+ t)
+    }.getOrElse(tiles)
   }
 
   def getCoords(height: Int, width: Int) = {
     val tiles = (for(x <- 0 until width) yield {
       (for(y <- 0 until height) yield {
-        Tile(x, y)
+        Tile((x * 10) + ((y % 2) * 5), y * 10)
       }).toArray
     }).toArray
 
     tiles.foreach(_.foreach { t =>
-      val x = t.x
-      val y = t.y
+      val x = Math.abs(t.x / 10)
+      val y = t.y / 10
 
       t.east = tiles.at(x + 1, y)
-      t.northeast = tiles.at(x + 1, y - 1)
-      t.southeast = tiles.at(x + 1, y + 1)
       t.west = tiles.at(x - 1, y)
-      t.northwest = tiles.at(x - 1, y - 1)
-      t.southwest = tiles.at(x - 1, y + 1)
 
+      if (t.x % 10 > 0) {
+        t.northeast = tiles.at(x + 1, y - 1)
+        t.northwest = tiles.at(x, y - 1)
+        t.southeast = tiles.at(x + 1, y + 1)
+        t.southwest = tiles.at(x, y + 1)
+      } else {
+        t.northeast = tiles.at(x, y - 1)
+        t.northwest = tiles.at(x - 1, y - 1)
+        t.southeast = tiles.at(x, y + 1)
+        t.southwest = tiles.at(x -1, y + 1)
+      }
     })
     Zone(tiles.flatten)
   }
