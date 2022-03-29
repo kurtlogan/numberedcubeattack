@@ -11,15 +11,6 @@ object RichOps {
     def at(row: Int, col: Int): Option[A] =
       array.lift(row).flatMap(_.lift(col))
   }
-
-  implicit class OptionOps[A](opt: Option[A]) {
-
-    def flip[B](b: => B): Option[B] =
-      opt match {
-        case Some(_) => None
-        case None    => Some(b)
-      }
-  }
 }
 
 case class Tile(x: Int, y: Int) {
@@ -44,7 +35,6 @@ case class Zone(tiles: Array[Tile]) {
   val westBoundry      = tiles.filterNot(t => tiles.contains(Tile(t.x - 10, t.y    )))
   val northwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y - 10)))
   val southwestBoundry = tiles.filterNot(t => tiles.contains(Tile(t.x - 5, t.y + 10)))
-
 }
 
 case class Territory(zones: Array[Zone], owner: Option[Player]) {
@@ -64,7 +54,12 @@ object WorldMap {
     val usableTiles = LinkNeighbours.on(getCoords(height, width))
 
     val zones: Array[Zone] =
-      (for(p <- 0 until (players * zonesPerPlayer)) yield {
+      (for(_ <- 0 until (players * zonesPerPlayer)) yield {
+        //make optional lakes
+//        if(Random.nextInt(3) == 2) {
+//          makeZone(Random.between(4, 14), usableTiles)
+//        }
+
         makeZone(Random.between(minZoneSize, maxZoneSize + 1), usableTiles)
       }).toArray
 
@@ -116,10 +111,10 @@ object WorldMap {
     val validTiles =
       tiles
         .flatMap(nfilter)
-        .groupBy(t => t.neighbours.count(!tiles.contains(_))) // favour tiles with more neighbours to remove gaps and prevent corridors
-        //.groupBy(t => nfilter(t).size) // no "lakes"
+        .groupBy(t => t.neighbours.count(n => tiles.contains(n))) // favour tiles with more neighbours to remove gaps and prevent corridors
+        //.groupBy(t => t.neighbours.count(n => tiles.contains(n) || usedTiles.contains(n))) // no "lakes"
         .toList
-        .sortBy(_._1)//(Ordering.Int.reverse) // corridor mode ;)
+        .sortBy(_._1)(Ordering.Int.reverse) // remove ordering for corridor mode ;)
         .map(_._2)
         .headOption
 

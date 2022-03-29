@@ -48,13 +48,13 @@ object GameScene extends Scene[Unit, Unit, Unit]:
       SceneUpdateFragment(Layer(world))
     )
 
-  lazy val gen = WorldMap(30, 37, 8, 1, 14, 32)
+  lazy val gen = WorldMap(30, 37, 8, 4, 14, 32)
 
   //gen.territories.foreach{t => println("t"); t.zones.foreach{z => println("z"); z.tiles.foreach(println)}}
 
   val playerColours =
     List(
-      RGBA.Purple,
+      RGBA.Indigo,
       RGBA.Green,
       RGBA.Orange,
       RGBA.Magenta,
